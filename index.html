@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello, World!</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: black;
+            color: white;
+            font-family: 'Merriweather', serif;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .container {
+            width: 90%;
+            max-width: 400px;
+            height: auto;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            opacity: 0;
+            animation: fadeIn 1s forwards;
+        }
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+        .info-block, .button-block {
+            background-color: rgba(0, 0, 0, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.7), 0 0 30px rgba(0, 0, 255, 0.5);
+            margin: 10px 0;
+            position: relative;
+            overflow: hidden;
+            text-align: left;
+            animation: glow 1.5s infinite alternate;
+        }
+        @keyframes glow {
+            0% {
+                box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+            }
+            100% {
+                box-shadow: 0 0 20px rgba(255, 255, 255, 1);
+            }
+        }
+        .info-block::before, .button-block::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            filter: blur(900px);
+            z-index: 0;
+            opacity: 0.5;
+        }
+        h2, h3 {
+            margin: 10px 0;
+        }
+        p {
+            line-height: 1.6;
+        }
+        .button-block {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        button {
+            margin: 5px 0;
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: background-color 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            max-width: 200px;
+            opacity: 0;
+            animation: buttonFadeIn 1s forwards;
+        }
+        @keyframes buttonFadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+        button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        button i {
+            margin-right: 5px;
+        }
+        @media (min-width: 600px) {
+            .button-block {
+                flex-direction: row;
+            }
+            button {
+                margin: 0 5px;
+                width: auto;
+            }
+        }
+        @keyframes pulsate {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+        }
+        body {
+            animation: pulsate 4s infinite;
+        }
+        .text-overlay {
+            position: absolute;
+            font-size: 24px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            white-space: nowrap;
+            animation: textFade 3s infinite;
+        }
+        @keyframes textFade {
+            0%, 100% {
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+<canvas id="glcanvas" width="1920" height="578"></canvas>
+
+<!-- Overlay for random text -->
+<div class="text-overlay" id="textOverlay"></div>
+
+<div class="container">
+    <div class="info-block">
+        <h2>Hello, Stranger!</h2>
+        <p>I'm glad to see you on this page on the internet! Here, I share my passions related to the world of AI and new technologies.</p>
+        <h3>My Projects</h3>
+        <p>I am constantly working on new projects, and I would love for you to visit my GitHub and YouTube channel to see more!</p>
+        <h3>I'd Love to Hear Your Thoughts!</h3>
+        <p>Below, you'll find a few buttons: one copies my script for MeepCity, another leads to my GitHub, and the last to my YouTube channel. Feel free to leave your comments!</p>
+    </div>
+    <div class="button-block">
+        <button id="copyButton"><i class="fas fa-copy"></i> Copy Script</button>
+        <button id="githubButton"><i class="fab fa-github"></i> Go to GitHub</button>
+        <button id="youtubeButton"><i class="fab fa-youtube"></i> Go to YouTube</button>
+    </div>
+</div>
+
+<script type="text/javascript">
+    const canvas = document.getElementById("glcanvas");
+    const gl = canvas.getContext("webgl");
+
+    // Adjust canvas size based on the window size
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas(); // Initial resize
+
+    const vertexShaderSource = `
+        attribute vec4 position;
+        void main() {
+            gl_Position = position;
+        }
+    `;
+
+    const fragmentShaderSource = `
+        precision mediump float;
+        uniform float time;
+        void main() {
+            vec2 uv = gl_FragCoord.xy / vec2(3000.0, 3000.0);
+            float wave1 = sin(uv.y * 10.0 + time * 0.5);
+            float wave2 = sin(uv.x * 10.0 + time * 0.5);
+            float wave3 = cos(uv.y * 5.0 + time * 0.75);
+            float wave4 = cos(uv.x * 5.0 + time * 0.75);
+            float wave5 = sin(uv.x * 15.0 + time * 0.25);
+            float wave6 = cos(uv.y * 15.0 + time * 0.25);
+            float wave7 = sin(uv.x * 20.0 + time * 0.2);
+            float wave8 = cos(uv.y * 20.0 + time * 0.2);
+            float r = abs(sin(uv.x * 10.0 + time) + wave1 + wave3 + wave5) * 0.2;
+            float g = abs(sin(uv.y * 10.0 + time) + wave2 + wave4 + wave6) * 0.2;
+            float b = abs(sin((uv.x + uv.y) * 5.0 + time) + wave7 + wave8) * 0.2;
+            gl_FragColor = vec4(r, g, b, 1.0);
+        }
+    `;
+
+    function createShader(gl, type, source) {
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            console.error(gl.getShaderInfoLog(shader));
+            gl.deleteShader(shader);
+            return null;
+        }
+        return shader;
+    }
+
+    function createProgram(gl, vertexShader, fragmentShader) {
+        const program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+            console.error(gl.getProgramInfoLog(program));
+            return null;
+        }
+        return program;
+    }
+
+    const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+    const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+    const program = createProgram(gl, vertexShader, fragmentShader);
+
+    const positionAttributeLocation = gl.getAttribLocation(program, "position");
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+        -1, -1,
+         1, -1,
+        -1,  1,
+         1,  1,
+    ]), gl.STATIC_DRAW);
+
+    const timeUniformLocation = gl.getUniformLocation(program, "time");
+
+    let startTime = Date.now();
+
+    function render() {
+        const elapsed = (Date.now() - startTime) / 1000;
+        gl.clearColor(0, 0, 0, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.useProgram(program);
+        gl.enableVertexAttribArray(positionAttributeLocation);
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+        gl.uniform1f(timeUniformLocation, elapsed);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+
+    const phrases = [
+        "AI?",
+        "AGI?",
+        "ANI?",
+        "ASI?",
+        "Secrets of AI?",
+        "What's next?",
+        "Mystery of technology?",
+        "Power ahead?",
+        "Is the future here?",
+        "Invisible possibilities?",
+        "Tomorrow with AI?",
+        "Ready for change?",
+        "What are the true goals?",
+        "AI or humans?",
+        "First spark?",
+        "Time for change?",
+        "Lost answers?",
+        "Where are the limits of AI?",
+        "Path to greatness?",
+        "What is ANI?",
+        "What is AGI?",
+        "What is ASI?"
+    ];
+
+
+
+    const textOverlay = document.getElementById("textOverlay");
+    const usedPhrases = new Set();
+
+    function showRandomText() {
+        if (usedPhrases.size === phrases.length) {
+            // All phrases have been used, reset
+            usedPhrases.clear();
+        }
+
+        let randomPhrase;
+        do {
+            randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+        } while (usedPhrases.has(randomPhrase));
+
+        usedPhrases.add(randomPhrase);
+        textOverlay.textContent = randomPhrase;
+
+        // Set random position on the screen
+        const x = Math.random() * (window.innerWidth - 200);
+        const y = Math.random() * (window.innerHeight - 50);
+        textOverlay.style.left = `${x}px`;
+        textOverlay.style.top = `${y}px`;
+
+        setTimeout(showRandomText, 3000); // Change text every 3 seconds
+    }
+
+    showRandomText();
+
+    // Button actions
+    document.getElementById('copyButton').onclick = function() {
+        navigator.clipboard.writeText("This is my script for MeepCity!");
+        alert("Script copied to clipboard!");
+    };
+
+    document.getElementById('githubButton').onclick = function() {
+        window.open("https://github.com/", "_blank");
+    };
+
+    document.getElementById('youtubeButton').onclick = function() {
+        window.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "_blank");
+    };
+</script>
+</body>
+</html>
